@@ -20,8 +20,10 @@ public class TestBase {
     protected final String password = UUID.randomUUID().toString();
     protected final String doctor = json.toJson(new RegisterDoctorDtoRequest("Василий","Флоров","Терапевт","vas1969","1969vas"));
     protected final String doctor2 = json.toJson(new RegisterDoctorDtoRequest("Иван","Тарелкин","Хирург","ivan55","55ivan"));
+    protected final String doctor3 = json.toJson(new RegisterDoctorDtoRequest("Пётр","Кечиков","Терапевт","petr1488","1488petr"));
     protected final String login = json.toJson(new LoginDtoRequest("vas1969","1969vas"));
     protected final String login2 = json.toJson(new LoginDtoRequest("ivan55","55ivan"));
     protected final String patient = json.toJson(new RegisterPatientDtoRequest("Дмитрий","Федотов","dimasik","frol1234","ОРВИ"));
+    protected final String patient2 = json.toJson(new RegisterPatientDtoRequest("Иван","Соколов","ivan43","kepor","ОРВИ"));
 
 }

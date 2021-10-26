@@ -4,7 +4,9 @@ import com.google.gson.Gson;
 import net.thumbtack.school.hospital.daoimpl.DoctorDaoImpl;
 import net.thumbtack.school.hospital.daoimpl.UserDaoImpl;
 import net.thumbtack.school.hospital.dto.request.EmptyDtoRequest;
+import net.thumbtack.school.hospital.dto.request.PatientAndTreatment;
 import net.thumbtack.school.hospital.dto.request.RegisterDoctorDtoRequest;
+import net.thumbtack.school.hospital.dto.request.TokenDtoRequest;
 import net.thumbtack.school.hospital.dto.response.EmptyDtoResponse;
 import net.thumbtack.school.hospital.mappers.UserMapper;
 import net.thumbtack.school.hospital.model.Doctor;
@@ -55,6 +57,18 @@ public class DoctorService{
             return new ServerResponse(RESPONSE_CODE_OK,"");
         } catch (ServerException e) {
             return new ServerResponse(RESPONSE_CODE_ERROR,e.getServerErrorCode().getErrorCode());
+        }
+
+    }
+    public ServerResponse addTreatment(String jsonTokenDtoRequest,String jsonString){
+        try {
+            TokenDtoRequest tokenDtoRequest = ServiceUtils.getClassFromJson(jsonTokenDtoRequest,TokenDtoRequest.class);
+            PatientAndTreatment patientAndTreatment = ServiceUtils.getClassFromJson(jsonString, PatientAndTreatment.class);
+            Doctor doctor = (Doctor) userDao.selectByToken(tokenDtoRequest.getToken());
+            doctorDao.addTreatment(doctor,patientAndTreatment);
+            return new ServerResponse(200, "");
+        } catch (ServerException e) {
+            return new ServerResponse(400,e.getServerErrorCode().getErrorCode());
         }
 
     }

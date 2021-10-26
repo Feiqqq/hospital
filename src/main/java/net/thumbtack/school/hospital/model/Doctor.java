@@ -16,8 +16,10 @@ public class Doctor extends User{
         this.specialty = specialty;
     }
 
-    // REVU addPatient. Не вводите в заблуждение названиями методов
     public void addPatient(Patient patient) {
         patients.add(patient);
+    }
+    public void addPatientFromList(List<Patient> list){
+        patients.addAll(list);
     }
 }

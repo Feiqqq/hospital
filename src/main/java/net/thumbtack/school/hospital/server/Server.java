@@ -33,4 +33,7 @@ public class Server {
     public ServerResponse addPatient(String token, String jsonString) {
         return doctorService.addPatient(token, jsonString);
     }
+    public ServerResponse addTreatment(String json1,String json2){
+        return doctorService.addTreatment(json1,json2);
+    }
 }
