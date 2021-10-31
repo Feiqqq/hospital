@@ -6,6 +6,8 @@ import net.thumbtack.school.hospital.model.Patient;
 import net.thumbtack.school.hospital.model.User;
 import net.thumbtack.school.hospital.server.exceptions.ServerErrorCode;
 import net.thumbtack.school.hospital.server.exceptions.ServerException;
+import org.apache.commons.collections4.MultiValuedMap;
+import org.apache.commons.collections4.multimap.ArrayListValuedHashMap;
 
 import java.util.*;
 
@@ -14,6 +16,10 @@ public final class Database {
     private static Database instance;// реализация ленивого сингелтона
     private Map<String, User> users = new HashMap<>();
     private Map<String, User> usersByToken = new HashMap<>();
+    private MultiValuedMap<String, Doctor> doctorBySpeciality = new ArrayListValuedHashMap<>();
+    private Map<Integer,Doctor> doctorById = new HashMap<>();
+    private Map<Doctor,Integer> idByDoctor = new HashMap<>();
+    private Integer id = 1;
 
     public static synchronized Database getInstance() {
         if (instance == null) {
@@ -22,82 +28,77 @@ public final class Database {
         return instance;
     }
 
-
-    public User selectByLogin(String login) throws ServerException {
-        if (users.get(login) == null) throw new ServerException(ServerErrorCode.NOT_FOUND_USER);
-        return users.get(login);
-    }
-
     public void insert(User user) throws ServerException {
         if (users.putIfAbsent(user.getLogin(), user) != null)
             throw new ServerException(ServerErrorCode.USER_ALREADY_EXISTS);
-    }
-
-    public void delete(String token) {
-        // нужно вытащить доктора
-        // получить список его пациентов
-        // этим пациентам назначить нового доктора с такой же специальностью
-        // нужно учитывать тот факт, что доктор который будет первый в списке с нужной специальностью, именно он будет получать всех пациентов, что с этим делать
-        // получить лист всех докторов с нужной специальностью сгенерировать рандомное число, а если нет врача с нужной специальностью на рандом любому врачу
-        Doctor doctor = (Doctor) usersByToken.get(token);
-        List<Doctor> doctorWithSpecialty = new ArrayList<>();
-        List<Doctor> allDoctors = new ArrayList<>();
-        if (!doctor.getPatients().isEmpty()) {
-            users.forEach((key, value) -> {
-                Class clazz = value.getClass();
-                if (clazz.isInstance(doctor)) {
-                    Doctor newDoc = (Doctor) value;
-                    if (newDoc.getSpecialty().equals(doctor.getSpecialty()) && !newDoc.getLogin().equals(doctor.getLogin())) {
-                        doctorWithSpecialty.add(newDoc);
-                    }
-                    allDoctors.add(newDoc);
-                }
-            });
-
-            if (!doctorWithSpecialty.isEmpty()) {
-                int x = new Random().nextInt(doctorWithSpecialty.size());
-                doctorWithSpecialty.get(x).addPatientFromList(doctor.getPatients());
-                for (Patient patient : doctor.getPatients()) {
-                    patient.setDoctor(doctorWithSpecialty.get(x));
-                }
-            } else {
-                if (!allDoctors.isEmpty()) {
-                    int x = new Random().nextInt(allDoctors.size());
-                    allDoctors.get(x).addPatientFromList(doctor.getPatients());
-                    for (Patient patient : doctor.getPatients()) {
-                        patient.setDoctor(allDoctors.get(x));
-                    }
-                }
-            }
+        if (user.getClass().equals(Doctor.class)) {
+            Doctor doctor = (Doctor) user;
+            doctorBySpeciality.put(doctor.getSpecialty(), doctor);
+            doctorById.put(id,(Doctor) user);
+            idByDoctor.put((Doctor) user,id);
+            id++;
         }
-        users.remove(usersByToken.get(token).getLogin());
-        usersByToken.remove(token);
     }
 
-    public void addTreatment(Doctor doctor, PatientAndTreatment patientAndTreatment) throws ServerException {
+    public User selectByLogin(String login) throws ServerException {
+        User user = users.get(login);
+        if (user == null) throw new ServerException(ServerErrorCode.NOT_FOUND_USER);
+        return user;
+    }
+
+    public User selectByToken(String token) {
+        return usersByToken.get(token);
+    }
+
+    public List<Doctor> selectBySpeciality(String speciality) {
+        return (List<Doctor>) doctorBySpeciality.get(speciality);
+    }
+    public Doctor selectById(Integer idDto) throws ServerException {
+        if(id == 1|| id == 2) throw new ServerException(ServerErrorCode.WRONG_DELETE_DOCTOR);
+        return doctorById.get(idDto);
+    }
+    public Integer selectIdByDoctor(Doctor doctor){
+        return idByDoctor.get(doctor);
+    }
+
+
+    public List<Patient> getAllMyPatients(String token) {
+        Doctor doctor = (Doctor) usersByToken.get(token);
+        return doctor.getPatients();
+    }
+    public Integer getQuantityDoctor(){
+        return id;
+    }
+
+    public void addPatient(String token, Doctor doctor, Patient patient) throws ServerException {
+        if (usersByToken.remove(token) == null) throw new ServerException(ServerErrorCode.NOT_FOUND_USER);
+        usersByToken.put(token, doctor);
+        users.put(patient.getLogin(), patient);
+    }
+
+    public void addTreatment(Doctor doctor, PatientAndTreatment patientAndTreatment) {
         for (Patient patient : doctor.getPatients()) {
             if (patient.getLogin().equals(patientAndTreatment.getLogin())) {
-                if (patientAndTreatment.getMedicament() != null && patientAndTreatment.getFrequency() != null) {
-                    patient.addProceduresAndMedications(patientAndTreatment.getMedicament() + patientAndTreatment.getFrequency());
+                if (patient.getProceduresAndMedications() == null) {
+                    List<String> list = new ArrayList<>();
+                    patient.setProceduresAndMedications(list);
                 }
-                else if(patientAndTreatment.getProcedures() != null && patientAndTreatment.getDaysOfWeek() != null) {
-                    patient.addProceduresAndMedications(patientAndTreatment.getProcedures()+ patientAndTreatment.getDaysOfWeek());
+                if (!patientAndTreatment.getMedicament().isEmpty() && !patientAndTreatment.getFrequency().isEmpty()) {
+                    patient.addProceduresAndMedications(patientAndTreatment.getMedicament() + " " + patientAndTreatment.getFrequency());
                 }
-                else {
-                    throw new ServerException(ServerErrorCode.INCORRECT_INPUT);
+                if (!patientAndTreatment.getProcedures().isEmpty() && !patientAndTreatment.getDaysOfWeek().isEmpty()) {
+                    patient.addProceduresAndMedications(patientAndTreatment.getProcedures() + " " + patientAndTreatment.getDaysOfWeek());
                 }
             }
         }
     }
 
     public void upgrade(String token, User user) {
-        users.remove(user.getLogin());
-        users.put(user.getLogin(), user);
-        usersByToken.remove(token);
-        usersByToken.put(token, user);
+        users.replace(user.getLogin(), user);
+        usersByToken.replace(token, user);
     }
 
-    public void insert(String token, User user) {
+    public void login(String token, User user) {
         usersByToken.put(token, user);
     }
 
@@ -106,18 +107,19 @@ public final class Database {
 
     }
 
-    public void addPatient(String token, Doctor doctor) throws ServerException {
-        if (usersByToken.remove(token) == null) throw new ServerException(ServerErrorCode.NOT_FOUND_USER);
-        usersByToken.put(token, doctor);
+    public void delete(String token) {
+        users.remove(usersByToken.get(token).getLogin());
+        usersByToken.remove(token);
     }
 
-    public User selectByToken(String token) {
-        return usersByToken.get(token);
-    }
 
     public void deleteAll() {
+        doctorBySpeciality.clear();
         users.clear();
         usersByToken.clear();
+        doctorById.clear();
+        idByDoctor.clear();
+        id = 1;
     }
 }
 

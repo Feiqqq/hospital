@@ -1,6 +1,7 @@
 package net.thumbtack.school.hospital.server;
 
 
+import net.thumbtack.school.hospital.server.exceptions.ServerException;
 import net.thumbtack.school.hospital.service.DoctorService;
 import net.thumbtack.school.hospital.service.PatientService;
 import net.thumbtack.school.hospital.service.UserService;
@@ -14,8 +15,8 @@ public class Server {
         return doctorService.registerDoctor(json);
     }
 
-    public ServerResponse deleteDoctor(String token, String json) {
-        return doctorService.deleteDoctor(token, json);
+    public ServerResponse deleteDoctor(String token) {
+        return doctorService.deleteDoctor(token);
     }
 
     public ServerResponse changePass(String token, String password) {
@@ -33,7 +34,11 @@ public class Server {
     public ServerResponse addPatient(String token, String jsonString) {
         return doctorService.addPatient(token, jsonString);
     }
-    public ServerResponse addTreatment(String json1,String json2){
-        return doctorService.addTreatment(json1,json2);
+    public ServerResponse addTreatment(String token,String jsonPatientAndTreatment){
+        return doctorService.addTreatment(token,jsonPatientAndTreatment);
+    }
+    public ServerResponse getAllMyPatients(String jsonToken) throws ServerException {
+        return doctorService.getAllMyPatients(jsonToken);
     }
 }
+

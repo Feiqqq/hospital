@@ -1,5 +1,10 @@
 package net.thumbtack.school.hospital.dto.request;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class RegisterPatientDtoRequest {
     private String firstName;
     private String lastName;

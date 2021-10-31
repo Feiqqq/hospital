@@ -3,19 +3,24 @@ package net.thumbtack.school.hospital.service;
 import com.google.gson.Gson;
 import net.thumbtack.school.hospital.daoimpl.DoctorDaoImpl;
 import net.thumbtack.school.hospital.daoimpl.UserDaoImpl;
-import net.thumbtack.school.hospital.dto.request.EmptyDtoRequest;
 import net.thumbtack.school.hospital.dto.request.PatientAndTreatment;
 import net.thumbtack.school.hospital.dto.request.RegisterDoctorDtoRequest;
-import net.thumbtack.school.hospital.dto.request.TokenDtoRequest;
+import net.thumbtack.school.hospital.dto.request.RegisterPatientDtoRequest;
 import net.thumbtack.school.hospital.dto.response.EmptyDtoResponse;
+import net.thumbtack.school.hospital.dto.response.PatientResponse;
 import net.thumbtack.school.hospital.mappers.UserMapper;
 import net.thumbtack.school.hospital.model.Doctor;
 import net.thumbtack.school.hospital.model.Patient;
+import net.thumbtack.school.hospital.model.User;
 import net.thumbtack.school.hospital.server.exceptions.ServerErrorCode;
 import net.thumbtack.school.hospital.server.exceptions.ServerException;
 import net.thumbtack.school.hospital.server.ServerResponse;
 
-public class DoctorService{
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
+
+public class DoctorService extends ServiceUtils {
     private static final int RESPONSE_CODE_OK = 200;
     private static final int RESPONSE_CODE_ERROR = 400;
     private DoctorDaoImpl doctorDao = new DoctorDaoImpl();
@@ -25,60 +30,92 @@ public class DoctorService{
     public ServerResponse registerDoctor(String jsonString) {
         try {
             RegisterDoctorDtoRequest regDoc = ServiceUtils.getClassFromJson(jsonString, RegisterDoctorDtoRequest.class);
-            validate(regDoc);
+            validateRegDoc(regDoc);
             doctorDao.insert(UserMapper.INSTANCE.toDoctor(regDoc));
-            return new ServerResponse(RESPONSE_CODE_OK,"");
+            return new ServerResponse(RESPONSE_CODE_OK, "");
         } catch (ServerException e) {
-            return new ServerResponse(RESPONSE_CODE_ERROR,e.getServerErrorCode().getErrorCode());
+            return new ServerResponse(RESPONSE_CODE_ERROR, e.getServerErrorCode().getErrorCode());
         }
     }
 
 
-    public ServerResponse deleteDoctor(String token, String jsonString) {
+    public ServerResponse deleteDoctor(String token) {
         try {
-            EmptyDtoRequest emptyDtoRequest = ServiceUtils.getClassFromJson(jsonString, EmptyDtoRequest.class);
+            if (!doctorDao.getAllMyPatients(token).isEmpty()) {
+                Doctor doctor = (Doctor) userDao.selectByToken(token);
+                List<Doctor> doctorList = doctorDao.getDoctorBySpeciality(doctor.getSpecialty());
+                doctorList.remove(doctor);
+                if (doctorList.size() == 0) {
+                    Integer randomDoctorId = new Random().nextInt(doctorDao.getQuantityDoctor());
+                    Doctor doc = doctorDao.selectById(randomDoctorId);
+                    if (doctor.equals(doc)) {
+                        Integer quantityDoctor = doctorDao.getQuantityDoctor();
+                        if (randomDoctorId + 1 < quantityDoctor) {
+                            doc = doctorDao.selectById(randomDoctorId+1);
+                        } else {
+                            doc = doctorDao.selectById(randomDoctorId-1);
+                        }
+                    }
+                    doc.addPatientFromList(doctor.getPatients());
+                    for (Patient patient : doctor.getPatients()) {
+                        patient.setDoctor(doc);
+                    }
+                } else {
+                    int x = new Random().nextInt(doctorList.size());
+                    doctorList.get(x).addPatientFromList(doctor.getPatients());
+                    for (Patient patient : doctor.getPatients()) {
+                        patient.setDoctor(doctorList.get(x));
+                    }
+                }
+            }
             doctorDao.delete(token);
-            EmptyDtoResponse emptyDtoResponse = new EmptyDtoResponse();
-            return new ServerResponse(RESPONSE_CODE_OK,json.toJson(emptyDtoResponse));
+            return new ServerResponse(RESPONSE_CODE_OK, json.toJson(new EmptyDtoResponse()));
         } catch (ServerException e) {
-            return new ServerResponse(RESPONSE_CODE_ERROR,e.getServerErrorCode().getErrorCode());
+            return new ServerResponse(RESPONSE_CODE_ERROR, e.getServerErrorCode().getErrorCode());
         }
     }
 
 
-
-    public ServerResponse addPatient(String token, String jsonString){
-        try{
-            Doctor doctor = (Doctor) userDao.selectByToken(token);
-            Patient patient = ServiceUtils.getClassFromJson(jsonString,Patient.class);
-            doctor.addPatient(patient);
-            patient.setDoctor(doctor);
-            doctorDao.addPatient(token,doctor);
-            return new ServerResponse(RESPONSE_CODE_OK,"");
-        } catch (ServerException e) {
-            return new ServerResponse(RESPONSE_CODE_ERROR,e.getServerErrorCode().getErrorCode());
-        }
-
-    }
-    public ServerResponse addTreatment(String jsonTokenDtoRequest,String jsonString){
+    public ServerResponse addPatient(String token, String jsonString) {
         try {
-            TokenDtoRequest tokenDtoRequest = ServiceUtils.getClassFromJson(jsonTokenDtoRequest,TokenDtoRequest.class);
-            PatientAndTreatment patientAndTreatment = ServiceUtils.getClassFromJson(jsonString, PatientAndTreatment.class);
-            Doctor doctor = (Doctor) userDao.selectByToken(tokenDtoRequest.getToken());
-            doctorDao.addTreatment(doctor,patientAndTreatment);
-            return new ServerResponse(200, "");
+            User user = userDao.selectByToken(token);
+            if (user.getClass().equals(Doctor.class)) {
+                RegisterPatientDtoRequest regPatient = ServiceUtils.getClassFromJson(jsonString, RegisterPatientDtoRequest.class);
+                Doctor doctor = (Doctor) user;
+                Patient patient = UserMapper.INSTANCE.toPatient(regPatient);
+                doctor.addPatient(patient);
+                patient.setDoctor(doctor);
+                doctorDao.addPatient(token, doctor, patient);
+            } else {
+                throw new ServerException(ServerErrorCode.NOT_FOUND_USER);
+            }
+            return new ServerResponse(RESPONSE_CODE_OK, "");
         } catch (ServerException e) {
-            return new ServerResponse(400,e.getServerErrorCode().getErrorCode());
+            return new ServerResponse(RESPONSE_CODE_ERROR, e.getServerErrorCode().getErrorCode());
         }
 
     }
 
-    public void validate(RegisterDoctorDtoRequest regDoc) throws ServerException {
-        if (regDoc.getFirstName() == null) throw new ServerException(ServerErrorCode.WRONG_FISRTNAME);
-        if (regDoc.getLastName() == null) throw new ServerException(ServerErrorCode.WRONG_LASTNAME);
-        if (regDoc.getLogin() == null) throw new ServerException(ServerErrorCode.WRONG_LOGIN);
-        if (regDoc.getPassword() == null) throw new ServerException(ServerErrorCode.WRONG_LOGIN);
-        if (regDoc.getSpecialty() == null) throw new ServerException(ServerErrorCode.WRONG_SPECIALTY);
+    public ServerResponse addTreatment(String token, String jsonPatientAndTreatment) {
+        try {
+            PatientAndTreatment patientAndTreatment = ServiceUtils.getClassFromJson(jsonPatientAndTreatment, PatientAndTreatment.class); // экземляр
+            Doctor doctor = (Doctor) userDao.selectByToken(token);
+            doctorDao.addTreatment(doctor, patientAndTreatment);
+            return new ServerResponse(RESPONSE_CODE_OK, "");
+        } catch (ServerException e) {
+            return new ServerResponse(RESPONSE_CODE_ERROR, e.getServerErrorCode().getErrorCode());
+        }
+    }
+
+    public ServerResponse getAllMyPatients(String token) throws ServerException {
+        List<Patient> list = doctorDao.getAllMyPatients(token);
+        List<PatientResponse> patientResponseList = new ArrayList<>();
+        int i = 0;
+        for (Patient patient: list) {
+            patientResponseList.add(UserMapper.INSTANCE.toPatientResponse(patient));
+            patientResponseList.get(i).setDoctorId(doctorDao.selectIdByDoctor(patient.getDoctor()).toString());
+        }
+        return new ServerResponse(RESPONSE_CODE_OK, json.toJson(patientResponseList));
     }
 }
 

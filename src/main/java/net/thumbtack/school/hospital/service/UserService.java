@@ -19,7 +19,7 @@ public class UserService extends ServiceUtils{
     public ServerResponse loginUser(String jsonString) {
         try {
             LoginDtoRequest loginDtoRequest = ServiceUtils.getClassFromJson(jsonString, LoginDtoRequest.class);
-            validate(loginDtoRequest);
+            validateLogDtoRequest(loginDtoRequest);
             String token = UUID.randomUUID().toString();
             User user = userDao.selectByLogin(loginDtoRequest.getLogin());
             userDao.login(token, user);

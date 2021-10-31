@@ -9,7 +9,6 @@ public class User {
     private String lastName;
     private String login;
     private String password;
-    private int id;
     public User(){
 
     }

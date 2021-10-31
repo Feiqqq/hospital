@@ -18,6 +18,7 @@ public class TestBase {
     protected Server server = new Server();
     protected Gson json = new Gson();
     protected final String password = UUID.randomUUID().toString();
+    protected final String resultJson = "[{\"doctorId\":\"1\",\"firstName\":\"Дмитрий\",\"lastName\":\"Федотов\",\"login\":\"dimasik\",\"password\":\"frol1234\",\"nameOfDisease\":\"ОРВИ\",\"proceduresAndMedications\":[]},{\"firstName\":\"Иван\",\"lastName\":\"Соколов\",\"login\":\"ivan43\",\"password\":\"kepor\",\"nameOfDisease\":\"ОРВИ\",\"proceduresAndMedications\":[]}]";
     protected final String doctor = json.toJson(new RegisterDoctorDtoRequest("Василий","Флоров","Терапевт","vas1969","1969vas"));
     protected final String doctor2 = json.toJson(new RegisterDoctorDtoRequest("Иван","Тарелкин","Хирург","ivan55","55ivan"));
     protected final String doctor3 = json.toJson(new RegisterDoctorDtoRequest("Пётр","Кечиков","Терапевт","petr1488","1488petr"));
