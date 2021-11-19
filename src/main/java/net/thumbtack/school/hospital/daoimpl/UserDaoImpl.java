@@ -30,4 +30,8 @@ public class UserDaoImpl implements UserDao {
     public User selectByLogin(String login) throws ServerException{
         return Database.getInstance().selectByLogin(login);
     }
+    @Override
+    public User selectById(Integer id) throws ServerException {
+        return Database.getInstance().selectById(id);
+    }
 }

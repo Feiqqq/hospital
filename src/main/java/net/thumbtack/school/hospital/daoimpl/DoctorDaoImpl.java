@@ -2,15 +2,12 @@ package net.thumbtack.school.hospital.daoimpl;
 
 import net.thumbtack.school.hospital.dao.DoctorDao;
 import net.thumbtack.school.hospital.database.Database;
-import net.thumbtack.school.hospital.dto.request.PatientAndTreatment;
-import net.thumbtack.school.hospital.dto.request.TokenDtoRequest;
 import net.thumbtack.school.hospital.model.Doctor;
 import net.thumbtack.school.hospital.model.Patient;
-import net.thumbtack.school.hospital.model.User;
+import net.thumbtack.school.hospital.model.Treatment;   
 import net.thumbtack.school.hospital.server.exceptions.ServerException;
 
 import java.util.List;
-import java.util.Map;
 
 public class DoctorDaoImpl implements DoctorDao {
     @Override
@@ -30,8 +27,8 @@ public class DoctorDaoImpl implements DoctorDao {
     }
 
     @Override
-    public void addTreatment(Doctor doctor, PatientAndTreatment patientAndTreatment) throws ServerException {
-        Database.getInstance().addTreatment(doctor,patientAndTreatment);
+    public void addTreatment(Doctor doctor, Treatment treatment) throws ServerException {
+        Database.getInstance().addTreatment(doctor,treatment);
     }
 
 
@@ -47,17 +44,8 @@ public class DoctorDaoImpl implements DoctorDao {
 
     @Override
     public Integer getQuantityDoctor() {
-        return Database.getInstance().getQuantityDoctor();
+        return Database.getInstance().getNextID();
     }
 
-    @Override
-    public Doctor selectById(Integer id) throws ServerException {
-        return Database.getInstance().selectById(id);
-    }
-
-    @Override
-    public Integer selectIdByDoctor(Doctor doctor) throws ServerException {
-        return Database.getInstance().selectIdByDoctor(doctor);
-    }
 
 }

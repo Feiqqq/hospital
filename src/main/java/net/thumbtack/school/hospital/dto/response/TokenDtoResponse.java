@@ -7,4 +7,8 @@ import lombok.Setter;
 @Getter
 public class TokenDtoResponse {
     private String token;
+
+    public TokenDtoResponse(String token) {
+        this.token = token;
+    }
 }

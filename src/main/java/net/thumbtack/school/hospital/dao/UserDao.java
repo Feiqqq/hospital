@@ -9,4 +9,5 @@ public interface UserDao{
     void logout(String token) throws ServerException;
     User selectByToken(String token) throws ServerException;
     User selectByLogin(String login) throws ServerException;
+    User selectById(Integer id) throws ServerException;
 }

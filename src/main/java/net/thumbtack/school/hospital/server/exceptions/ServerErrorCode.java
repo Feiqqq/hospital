@@ -12,12 +12,15 @@ public enum ServerErrorCode {
     WRONG_SPECIALTY("WRONG_SPECIALTY"),
     NOT_FOUND_USER("NOT_FOUND_USER"),
     WRONG_PASSWORD_OR_LOGIN("WRONG_PASSWORD_OR_LOGIN"),
-    WRONG_DELETE_DOCTOR("WRONG_DELETE_DOCTOR");
+    WRONG_DELETE_DOCTOR("WRONG_DELETE_DOCTOR"),
+    WRONG_PATIENTS_LIST("WRONG_PATIENTS_LIST"),
+    NOT_FOUND_DOCTOR("NOT_FOUND_DOCTOR"),
+    WRONG_TOKEN("WRONG_TOKEN");
     String errorString;
     ServerErrorCode(String errorCode){
         this.errorString = errorCode;
    }
-    public String getErrorCode(){
+    public String getErrorString(){
         return errorString;
    }
 }

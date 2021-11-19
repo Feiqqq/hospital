@@ -1,39 +1,37 @@
 package net.thumbtack.school.Doctor;
 
-import com.google.gson.Gson;
+
 import net.thumbtack.school.hospital.dto.request.PatientAndTreatment;
-import net.thumbtack.school.hospital.dto.request.RegisterDoctorDtoRequest;
 import net.thumbtack.school.hospital.dto.response.TokenDtoResponse;
-import net.thumbtack.school.hospital.server.Server;
-import net.thumbtack.school.hospital.server.ServerResponse;
-// REVU исключения сервера клиенту (тесту) недоступны, это внутренность сервера
-import net.thumbtack.school.hospital.server.exceptions.ServerException;
+import net.thumbtack.school.hospital.model.Patient;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 public class TestDoctorOperation extends TestBase {
     @Test
     public void TestRegDoctor() {
-        Assertions.assertEquals(200, server.regDoctor(doctor).getResponseCode());
-        Assertions.assertEquals(400, server.regDoctor(doctor).getResponseCode());
-        Assertions.assertEquals(200, server.regDoctor(doctor2).getResponseCode());
-        Assertions.assertEquals(400, server.regDoctor(doctor2).getResponseCode());
-
+        Assertions.assertEquals(200, server.regDoctor(doctorJson1).getResponseCode());
+        Assertions.assertEquals(400, server.regDoctor(doctorJson1).getResponseCode());
+        Assertions.assertEquals(200, server.regDoctor(doctorJson2).getResponseCode());
+        Assertions.assertEquals(400, server.regDoctor(doctorJson2).getResponseCode());
+        Assertions.assertEquals(400,server.regDoctor(doctorJson4).getResponseCode());
+        Assertions.assertEquals(400,server.regDoctor(doctorJson5).getResponseCode());
+        Assertions.assertEquals(400,server.regDoctor(doctorJson6).getResponseCode());
     }
 
     @Test
     public void addPatient() {
-        server.regDoctor(doctor);
-        server.regDoctor(doctor2);
+        server.regDoctor(doctorJson1);
+        server.regDoctor(doctorJson2);
         Assertions.assertEquals(200, server.addPatient(json.fromJson(server.login(login).getResponseData(), TokenDtoResponse.class).getToken(), patient).getResponseCode());
         Assertions.assertEquals(200, server.addPatient(json.fromJson(server.login(login2).getResponseData(), TokenDtoResponse.class).getToken(), patient).getResponseCode());
     }
 
     @Test
     public void deleteDoctor() {
-        server.regDoctor(doctor);
-        server.regDoctor(doctor2);
-        server.regDoctor(doctor3);
+        server.regDoctor(doctorJson1);
+        server.regDoctor(doctorJson2);
+        server.regDoctor(doctorJson3);
         String token = server.login(login).getResponseData();
         server.addPatient(json.fromJson(token,TokenDtoResponse.class).getToken(), patient);
         server.addPatient(json.fromJson(token,TokenDtoResponse.class).getToken(), patient2);
@@ -42,17 +40,17 @@ public class TestDoctorOperation extends TestBase {
     }
     @Test
     public void addTreatment(){
-        server.regDoctor(doctor);
+        server.regDoctor(doctorJson1);
         String token = server.login(login).getResponseData();
         server.addPatient(json.fromJson(token,TokenDtoResponse.class).getToken(),patient);
-        PatientAndTreatment patientAndTreatment = new PatientAndTreatment("dimasik","Парацетамол","3","Прогревание лёгких","");
-        PatientAndTreatment patientAndTreatment1 = new PatientAndTreatment("dimasik","","3","Прогревание лёгких","Понедельник");
+        PatientAndTreatment patientAndTreatment = new PatientAndTreatment(1,"Парацетамол","3","Прогревание лёгких","");
+        PatientAndTreatment patientAndTreatment1 = new PatientAndTreatment(1,"","3","Прогревание лёгких","Понедельник");
         Assertions.assertEquals(200,server.addTreatment(json.fromJson(token,TokenDtoResponse.class).getToken(),json.toJson(patientAndTreatment,PatientAndTreatment.class)).getResponseCode());
         Assertions.assertEquals(200,server.addTreatment(json.fromJson(token,TokenDtoResponse.class).getToken(),json.toJson(patientAndTreatment1,PatientAndTreatment.class)).getResponseCode());
     }
     @Test
-    public void getAllMyPatients() throws ServerException {
-        server.regDoctor(doctor);
+    public void getAllMyPatients(){
+        server.regDoctor(doctorJson1);
         String token = server.login(login).getResponseData();
         server.addPatient(json.fromJson(token,TokenDtoResponse.class).getToken(), patient);
         server.addPatient(json.fromJson(token,TokenDtoResponse.class).getToken(), patient2);

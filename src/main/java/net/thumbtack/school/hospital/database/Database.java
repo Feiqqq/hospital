@@ -1,8 +1,8 @@
 package net.thumbtack.school.hospital.database;
 
-import net.thumbtack.school.hospital.dto.request.PatientAndTreatment;
 import net.thumbtack.school.hospital.model.Doctor;
 import net.thumbtack.school.hospital.model.Patient;
+import net.thumbtack.school.hospital.model.Treatment;
 import net.thumbtack.school.hospital.model.User;
 import net.thumbtack.school.hospital.server.exceptions.ServerErrorCode;
 import net.thumbtack.school.hospital.server.exceptions.ServerException;
@@ -14,11 +14,10 @@ import java.util.*;
 public final class Database {
 
     private static Database instance;// реализация ленивого сингелтона
-    private Map<String, User> users = new HashMap<>();
-    private Map<String, User> usersByToken = new HashMap<>();
-    private MultiValuedMap<String, Doctor> doctorBySpeciality = new ArrayListValuedHashMap<>();
-    private Map<Integer,Doctor> doctorById = new HashMap<>();
-    private Map<Doctor,Integer> idByDoctor = new HashMap<>();
+    private final Map<String, User> users = new HashMap<>();
+    private final Map<String, User> usersByToken = new HashMap<>();
+    private final MultiValuedMap<String, Doctor> doctorBySpeciality = new ArrayListValuedHashMap<>();
+    private final Map<Integer,User> userById = new HashMap<>();
     private Integer id = 1;
 
     public static synchronized Database getInstance() {
@@ -31,11 +30,11 @@ public final class Database {
     public void insert(User user) throws ServerException {
         if (users.putIfAbsent(user.getLogin(), user) != null)
             throw new ServerException(ServerErrorCode.USER_ALREADY_EXISTS);
+        user.setId(id);
         if (user.getClass().equals(Doctor.class)) {
             Doctor doctor = (Doctor) user;
             doctorBySpeciality.put(doctor.getSpecialty(), doctor);
-            doctorById.put(id,(Doctor) user);
-            idByDoctor.put((Doctor) user,id);
+            userById.put(id,user);
             id++;
         }
     }
@@ -53,20 +52,19 @@ public final class Database {
     public List<Doctor> selectBySpeciality(String speciality) {
         return (List<Doctor>) doctorBySpeciality.get(speciality);
     }
-    public Doctor selectById(Integer idDto) throws ServerException {
+    public User selectById(Integer idDto) throws ServerException {
+        // 1 если в базе вообще никого нет
+        // 2 если в базе только ток, кто и делает данный запрос
         if(id == 1|| id == 2) throw new ServerException(ServerErrorCode.WRONG_DELETE_DOCTOR);
-        return doctorById.get(idDto);
+        return userById.get(idDto);
     }
-    public Integer selectIdByDoctor(Doctor doctor){
-        return idByDoctor.get(doctor);
-    }
-
 
     public List<Patient> getAllMyPatients(String token) {
         Doctor doctor = (Doctor) usersByToken.get(token);
         return doctor.getPatients();
     }
-    public Integer getQuantityDoctor(){
+
+    public Integer getNextID(){
         return id;
     }
 
@@ -76,18 +74,18 @@ public final class Database {
         users.put(patient.getLogin(), patient);
     }
 
-    public void addTreatment(Doctor doctor, PatientAndTreatment patientAndTreatment) {
+    public void addTreatment(Doctor doctor, Treatment treatment) {
         for (Patient patient : doctor.getPatients()) {
-            if (patient.getLogin().equals(patientAndTreatment.getLogin())) {
+            if (patient.getId() == treatment.getId()) {
                 if (patient.getProceduresAndMedications() == null) {
                     List<String> list = new ArrayList<>();
                     patient.setProceduresAndMedications(list);
                 }
-                if (!patientAndTreatment.getMedicament().isEmpty() && !patientAndTreatment.getFrequency().isEmpty()) {
-                    patient.addProceduresAndMedications(patientAndTreatment.getMedicament() + " " + patientAndTreatment.getFrequency());
+                if (!treatment.getMedicament().isEmpty() && !treatment.getFrequency().isEmpty()) {
+                    patient.addProceduresAndMedications(treatment.getMedicament() + " " + treatment.getFrequency());
                 }
-                if (!patientAndTreatment.getProcedures().isEmpty() && !patientAndTreatment.getDaysOfWeek().isEmpty()) {
-                    patient.addProceduresAndMedications(patientAndTreatment.getProcedures() + " " + patientAndTreatment.getDaysOfWeek());
+                if (!treatment.getProcedures().isEmpty() && !treatment.getDaysOfWeek().isEmpty()) {
+                    patient.addProceduresAndMedications(treatment.getProcedures() + " " + treatment.getDaysOfWeek());
                 }
             }
         }
@@ -117,8 +115,7 @@ public final class Database {
         doctorBySpeciality.clear();
         users.clear();
         usersByToken.clear();
-        doctorById.clear();
-        idByDoctor.clear();
+        userById.clear();
         id = 1;
     }
 }

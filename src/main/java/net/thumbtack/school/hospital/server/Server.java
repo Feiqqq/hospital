@@ -1,17 +1,16 @@
 package net.thumbtack.school.hospital.server;
 
 
-import net.thumbtack.school.hospital.server.exceptions.ServerException;
 import net.thumbtack.school.hospital.service.DoctorService;
 import net.thumbtack.school.hospital.service.PatientService;
 import net.thumbtack.school.hospital.service.UserService;
 
 public class Server {
-    private DoctorService doctorService = new DoctorService();
-    private PatientService patientService = new PatientService();
-    private UserService userService = new UserService();
+    private final DoctorService doctorService = new DoctorService();
+    private final PatientService patientService = new PatientService();
+    private final UserService userService = new UserService();
 
-    public ServerResponse regDoctor(String json)  {
+    public ServerResponse regDoctor(String json) {
         return doctorService.registerDoctor(json);
     }
 
@@ -23,7 +22,7 @@ public class Server {
         return userService.changePass(token, password);
     }
 
-    public ServerResponse login(String json)  {
+    public ServerResponse login(String json) {
         return userService.loginUser(json);
     }
 
@@ -34,11 +33,19 @@ public class Server {
     public ServerResponse addPatient(String token, String jsonString) {
         return doctorService.addPatient(token, jsonString);
     }
-    public ServerResponse addTreatment(String token,String jsonPatientAndTreatment){
-        return doctorService.addTreatment(token,jsonPatientAndTreatment);
+
+    public ServerResponse addTreatment(String token, String jsonPatientAndTreatment) {
+        return doctorService.addTreatment(token, jsonPatientAndTreatment);
     }
-    public ServerResponse getAllMyPatients(String jsonToken) throws ServerException {
-        return doctorService.getAllMyPatients(jsonToken);
+
+    public ServerResponse getAllMyPatients(String token) {
+        return doctorService.getAllMyPatients(token);
+    }
+    public ServerResponse getMyTreatment(String token){
+        return patientService.getMyTreatment(token);
+    }
+    public ServerResponse getMyDoctor(String token){
+        return patientService.getMyDoctorInfo(token);
     }
 }
 

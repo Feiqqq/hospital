@@ -1,6 +1,8 @@
 package net.thumbtack.school.hospital.server;
 
 import lombok.Data;
+import net.thumbtack.school.hospital.server.exceptions.ServerException;
+
 
 @Data
 public class ServerResponse {
@@ -11,8 +13,15 @@ public class ServerResponse {
         this.responseCode = responseCode;
         this.responseData = responseData;
     }
+    public ServerResponse(int responseCode){
+        this.responseCode = responseCode;
+    }
+
+    public ServerResponse(int responseCode, ServerException e){
+        this.responseCode = responseCode;
+        this.responseData = e.getServerErrorCode().getErrorString();
+    }
 
     public ServerResponse() {
-
     }
 }

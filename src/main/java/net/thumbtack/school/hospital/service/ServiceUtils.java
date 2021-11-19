@@ -10,7 +10,7 @@ import net.thumbtack.school.hospital.server.exceptions.ServerException;
 
 public class ServiceUtils {
 
-    private Gson json = new Gson();
+    private final Gson json = new Gson();
 
     public static <T> T getClassFromJson(String jsonString, Class<T> className) throws ServerException {
         Gson json = new Gson();
@@ -28,19 +28,19 @@ public class ServiceUtils {
 
     }
     public void validateRegDoc(RegisterDoctorDtoRequest regDoc) throws ServerException {
-        if (regDoc.getFirstName() == null) {
+        if (regDoc.getFirstName() == null || regDoc.getFirstName().isEmpty() || regDoc.getFirstName().equals("null")) {
             throw new ServerException(ServerErrorCode.WRONG_FISRTNAME);
         }
-        if (regDoc.getLastName() == null) {
+        if (regDoc.getLastName() == null || regDoc.getLastName().isEmpty()|| regDoc.getLastName().equals("null")) {
             throw new ServerException(ServerErrorCode.WRONG_LASTNAME);
         }
-        if (regDoc.getLogin() == null) {
+        if (regDoc.getLogin() == null || regDoc.getLogin().isEmpty() || regDoc.getLogin().equals("null") || regDoc.getLogin().length()<4) {
             throw new ServerException(ServerErrorCode.WRONG_LOGIN);
         }
-        if (regDoc.getPassword() == null) {
+        if (regDoc.getPassword() == null || regDoc.getPassword().isEmpty() || regDoc.getPassword().equals("null") || regDoc.getPassword().length() < 4) {
             throw new ServerException(ServerErrorCode.WRONG_LOGIN);
         }
-        if (regDoc.getSpecialty() == null) {
+        if (regDoc.getSpecialty() == null || regDoc.getSpecialty().isEmpty() || regDoc.getSpecialty().equals("null")) {
             throw new ServerException(ServerErrorCode.WRONG_SPECIALTY);
         }
     }
